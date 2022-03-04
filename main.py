@@ -19,9 +19,9 @@ class Body:
     # Astronomical Unity
     AU = 149.6e6 * 1000
     G = 6.67428e-11
-    sc = 100
+    sc = 10
     SCALE = sc / AU 
-    TIMESTEP = 3600 * 24 * 1 # 1 day in second
+    TIMESTEP = 3600 * 24 * 30 # 1 day in second
 
     def __init__(self, x, y, radius, color, mass):
         self.x = x
@@ -191,7 +191,7 @@ def main():
                 y = (y - HEIGHT/2)/Body.sc
 
                 if event.key == pygame.K_e:
-                    earth = Body(x * Body.AU, y* Body.AU, 16, BLUE, 5.9742 * 10**24)
+                    earth = Body(x * Body.AU, y* Body.AU, 4, BLUE, 5.9742 * 10**24)
                     earth.y_vel = 29.783 * 1000
 
                     bodies.append(earth)
@@ -199,30 +199,33 @@ def main():
                 if keys[pygame.K_LEFT] and keys[pygame.K_m]:
                     left_pressed = True
                     
-                    mercury = Body(x * Body.AU, y * Body.AU, 8, DARK_GREY, 3.30 * 10**23)
+                    mercury = Body(x * Body.AU, y * Body.AU, 2, DARK_GREY, 3.30 * 10**23)
                     mercury.y_vel = 47.4 * 1000
                     bodies.append(mercury)
 
                 if keys[pygame.K_m] and left_pressed == False:
-                    mars = Body(x * Body.AU, y * Body.AU, 12, RED, 6.39 * 10**23)
+                    mars = Body(x * Body.AU, y * Body.AU, 3, RED, 6.39 * 10**23)
                     mars.y_vel = 24.077 * 1000
 
                     bodies.append(mars)
 
                 if keys[pygame.K_s]:
-                    sun = Body(x * Body.AU, y * Body.AU, 30, YELLOW, 1.98892 * 10**30)
+                    sun = Body(x * Body.AU, y * Body.AU, 10, YELLOW, 1.98892 * 10**30)
                     sun.sun = True
                     bodies.append(sun)
 
                 if keys[pygame.K_b]:
-                    bh = Body(x * Body.AU, y * Body.AU, 20, (148, 0, 211), 1.98892 * 10**30 * 100)
+                    bh = Body(x * Body.AU, y * Body.AU, 1, (148, 0, 211), 1.98892 * 10**30 * 100)
                     bh.sun = True
                     bodies.append(bh)
 
                 if keys[pygame.K_v]:
-                    venus = Body(x * Body.AU, y * Body.AU, 14, WHITE, 4.8685 * 10**24)
+                    venus = Body(x * Body.AU, y * Body.AU, 2.5, WHITE, 4.8685 * 10**24)
                     venus.y_vel = 35.02 * 1000
                     bodies.append(venus)
+
+                if keys[pygame.K_DELETE]:
+                    bodies = []
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:   
