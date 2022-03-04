@@ -2,7 +2,7 @@ import pygame
 import math
 pygame.init()
 
-WIDTH, HEIGHT =  1920, 1080
+WIDTH, HEIGHT =  1920, 900
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("body Simulation")
 
@@ -12,7 +12,7 @@ BLUE = (100, 149, 237)
 RED = (188, 39, 50)
 DARK_GREY = (80, 78, 81)
 
-FONT = pygame.font.SysFont("comicsans", 16)
+FONT = pygame.font.SysFont("comicsans", 30)
 
 class Body:
     # Astronomical Unity
@@ -20,7 +20,7 @@ class Body:
     G = 6.67428e-11
     sc = 250
     SCALE = sc / AU 
-    TIMESTEP = 3600 * 12 # 1 day in second
+    TIMESTEP = 3600 * 24 # 1 day in second
 
     def __init__(self, x, y, radius, color, mass):
         self.x = x
@@ -69,8 +69,10 @@ class Body:
         pygame.draw.circle(win, self.color, (x, y), self.radius)
         
         if not self.sun:
-            distance_text = FONT.render(f"{round(self.distance_to_sun/1000, 1)}km", 1, WHITE)
+            distance_text = FONT.render(f"{round(self.distance_to_sun/1000, 1)} KM", 1, WHITE)
+            velocity_text = FONT.render(f"{round(math.sqrt(self.x_vel ** 2 + self.y_vel ** 2), 1)} KM/H", 1, WHITE)
             win.blit(distance_text, (x - distance_text.get_width()/2, y - distance_text.get_height()/2))
+            win.blit(velocity_text, (x - distance_text.get_width()/2, y + distance_text.get_height()/2))
 
     def attraction(self, other):
         other_x, other_y = other.x, other.y
@@ -124,8 +126,21 @@ class Body:
                     body.radius, body.mass = r, m
                     bodies.remove(self)
 
-                
-        
+    
+    def add_wall_colision(self):
+        if self.x * self.SCALE - self.radius < -(WIDTH/2):
+            self.x_vel *= -1
+
+        if self.y * self.SCALE - self.radius < -(HEIGHT/2): 
+            self.y_vel *= -1
+
+        if self.x * self.SCALE + self.radius > (WIDTH/2):
+            self.x_vel *= -1
+
+        if self.y * self.SCALE + self.radius > (HEIGHT/2): 
+            self.y_vel *= -1
+
+
     def merge_body(self, body):
         my_volume = (4/3) * math.pi * (self.radius ** 3)
         other_volume = (4/3) * math.pi * (body.radius ** 3)
@@ -141,10 +156,6 @@ class Body:
 def main():
     run = True
     clock = pygame.time.Clock()
-
-    
-
-    
 
     bodies = []
 
@@ -168,8 +179,6 @@ def main():
 
                     bodies.append(earth)
 
-                
-                    
                 if keys[pygame.K_LEFT] and keys[pygame.K_m]:
                     left_pressed = True
                     
@@ -195,12 +204,13 @@ def main():
 
                 if keys[pygame.K_v]:
                     venus = Body(x * Body.AU, y * Body.AU, 14, WHITE, 4.8685 * 10**24)
-                    venus.y_vel = -35.02 * 1000
+                    venus.y_vel = 35.02 * 1000
                     bodies.append(venus)
 
         for body in bodies:
             body.update_position(bodies)
             body.check_colision(bodies)
+            body.add_wall_colision()
             body.draw(WIN)
 
         pygame.display.update()
