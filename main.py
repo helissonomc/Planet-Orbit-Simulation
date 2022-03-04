@@ -1,3 +1,4 @@
+from traceback import print_tb
 import pygame
 import math
 pygame.init()
@@ -18,9 +19,9 @@ class Body:
     # Astronomical Unity
     AU = 149.6e6 * 1000
     G = 6.67428e-11
-    sc = 250
+    sc = 100
     SCALE = sc / AU 
-    TIMESTEP = 3600 * 24 # 1 day in second
+    TIMESTEP = 3600 * 24 * 1 # 1 day in second
 
     def __init__(self, x, y, radius, color, mass):
         self.x = x
@@ -108,6 +109,17 @@ class Body:
         self.x += self.x_vel * self.TIMESTEP
         self.y += self.y_vel * self.TIMESTEP
         self.orbit.append((self.x, self.y))
+    
+    def unelastic_collission(self, body1, body2):
+        my_x_vel_final = body1.x_vel * (body1.mass - body2.mass)/(body1.mass + body2.mass) + body2.x_vel * 2 * body2.mass / (body1.mass + body2.mass) * (1 - body1.mass/(body1.mass + body2.mass))
+        my_y_vel_final = body1.y_vel * (body1.mass - body2.mass)/(body1.mass + body2.mass) + body2.y_vel * 2 * body2.mass / (body1.mass + body2.mass) * (1 - body1.mass/(body1.mass + body2.mass))
+
+
+
+        body_x_vel_final = 2 *  body1.x_vel * body1.mass/(body1.mass + body2.mass) - body2.x_vel * (body1.mass - body2.mass) / (body1.mass + body2.mass) * (1 - body1.mass/(body1.mass + body2.mass))
+        body_y_vel_final = 2 *  body1.y_vel * body1.mass/(body1.mass + body2.mass) - body2.y_vel * (body1.mass - body2.mass) / (body1.mass + body2.mass) * (1 - body1.mass/(body1.mass + body2.mass))
+
+        return (my_x_vel_final, my_y_vel_final, body_x_vel_final, body_y_vel_final)
 
     def check_colision(self, bodies):
         for body in bodies:
@@ -120,14 +132,18 @@ class Body:
             if distance * Body.SCALE <= body.radius + self.radius:
                 r, m = self.merge_body(body)
                 if self.mass >= body.mass:
+                    print('aq1')
+                    self.x_vel, self.y_vel, body.x_vel, body.y_vel = self.unelastic_collission(self, body)
                     self.radius, self.mass = r, m
                     bodies.remove(body)
                 else:
+                    print('aq2')
+                    body.x_vel, body.y_vel, self.x_vel, self.y_vel = self.unelastic_collission(body, self)
                     body.radius, body.mass = r, m
                     bodies.remove(self)
 
     
-    def add_wall_colision(self):
+    def add_wall_collision(self):
         if self.x * self.SCALE - self.radius < -(WIDTH/2):
             self.x_vel *= -1
 
@@ -154,11 +170,12 @@ class Body:
         return new_radius, new_mass
 
 def main():
+    
     run = True
     clock = pygame.time.Clock()
 
     bodies = []
-
+    body_drag = False
     while run:
         clock.tick(60)
         WIN.fill((0, 0, 0))
@@ -207,10 +224,39 @@ def main():
                     venus.y_vel = 35.02 * 1000
                     bodies.append(venus)
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:   
+                    x, y = pygame.mouse.get_pos()
+                    x = (x - WIDTH/2)/Body.sc * Body.AU
+                    y = (y - HEIGHT/2)/Body.sc * Body.AU
+
+                            
+                    for body in bodies:
+                        distance_x = body.x  - x
+                        distance_y = body.y - y
+                        distance = math.sqrt(distance_x ** 2 + distance_y ** 2)
+
+                        if distance * Body.SCALE <= body.radius:
+                            print(body.sun)
+                            body_drag = True
+                           
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:            
+                    body_drag = False
+
+            if event.type == pygame.MOUSEMOTION:
+                if body_drag:
+                    x, y = pygame.mouse.get_pos()
+                    x = (x - WIDTH/2)/Body.sc * Body.AU
+                    y = (y - HEIGHT/2)/Body.sc * Body.AU
+                    body.x = x
+                    body.y = y
+
         for body in bodies:
             body.update_position(bodies)
             body.check_colision(bodies)
-            body.add_wall_colision()
+            #body.add_wall_colision()
             body.draw(WIN)
 
         pygame.display.update()
