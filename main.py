@@ -2,7 +2,7 @@ import pygame
 import math
 pygame.init()
 
-WIDTH, HEIGHT =  800, 800
+WIDTH, HEIGHT =  1920, 1080
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("body Simulation")
 
@@ -32,6 +32,8 @@ class Body:
         self.orbit = []
         self.sun = False
         self.distance_to_sun = 0
+        self.distance_to_sun_x = 0
+        self.distance_to_sun_y = 0
 
         self.x_vel = 0
         self.y_vel = 0
@@ -50,6 +52,20 @@ class Body:
 
             pygame.draw.lines(win, self.color, False, updated_points, 2)
 
+        if not self.sun:
+            pygame.draw.line(
+                win,
+                self.color,
+                (
+                    self.x * self.SCALE + WIDTH / 2,
+                    self.y * self.SCALE + HEIGHT / 2
+                ),
+                (
+                    (self.x + self.distance_to_sun_x)* self.SCALE + WIDTH / 2,
+                    (self.y + self.distance_to_sun_y)* self.SCALE + HEIGHT / 2
+                ),
+                2
+            )
         pygame.draw.circle(win, self.color, (x, y), self.radius)
         
         if not self.sun:
@@ -64,6 +80,9 @@ class Body:
 
         if other.sun:
             self.distance_to_sun = distance
+
+            self.distance_to_sun_x = distance_x
+            self.distance_to_sun_y = distance_y
 
         force = self.G * self.mass * other.mass / distance**2
         theta = math.atan2(distance_y, distance_x)
@@ -97,11 +116,27 @@ class Body:
             distance_y = body.y - self.y
             distance = math.sqrt(distance_x ** 2 + distance_y ** 2)
             if distance * Body.SCALE <= body.radius + self.radius:
-                bodies.remove(body)
+                r, m = self.merge_body(body)
+                if self.mass >= body.mass:
+                    self.radius, self.mass = r, m
+                    bodies.remove(body)
+                else:
+                    body.radius, body.mass = r, m
+                    bodies.remove(self)
+
+                
         
     def merge_body(self, body):
-        pass
+        my_volume = (4/3) * math.pi * (self.radius ** 3)
+        other_volume = (4/3) * math.pi * (body.radius ** 3)
 
+        total_volume = my_volume + other_volume
+
+        new_radius = (total_volume*(3/4)/math.pi)**(1/3)
+
+        new_mass = self.mass + body.mass
+ 
+        return new_radius, new_mass
 
 def main():
     run = True
@@ -109,8 +144,7 @@ def main():
 
     
 
-    venus = Body(0.723 * Body.AU, 0, 14, WHITE, 4.8685 * 10**24)
-    venus.y_vel = -35.02 * 1000
+    
 
     bodies = []
 
@@ -154,10 +188,15 @@ def main():
                     sun.sun = True
                     bodies.append(sun)
 
-                
+                if keys[pygame.K_b]:
+                    bh = Body(x * Body.AU, y * Body.AU, 20, (148, 0, 211), 1.98892 * 10**30 * 100)
+                    bh.sun = True
+                    bodies.append(bh)
 
-    
-                
+                if keys[pygame.K_v]:
+                    venus = Body(x * Body.AU, y * Body.AU, 14, WHITE, 4.8685 * 10**24)
+                    venus.y_vel = -35.02 * 1000
+                    bodies.append(venus)
 
         for body in bodies:
             body.update_position(bodies)
